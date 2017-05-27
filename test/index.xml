@@ -1,0 +1,22 @@
+<html>
+    <div id="main" class="container">
+        <article id="article_1">
+            <p>Title_1</p>
+            <div class="article_content" href="href_a">
+                This is a test content.
+            </div>
+        </article>
+        <article id="article_2">
+            <p>Title_2</p>
+            <div class="article_content" href="href_b">
+                This is a test content.
+            </div>
+        </article>
+        <article id="article_3">
+            <p>Title_3</p>
+            <div class="article_content" href="href_c">
+                This is a test content.
+            </div>
+        </article>
+    </div>
+</html>
