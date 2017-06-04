@@ -1,11 +1,24 @@
 #encoding=utf-8
 from container.dm1080p_container import DM1080Container
 from cookie.cookie_module import CookieModule
+from log.log_utils import LogModule
+import Queue
+import MySQLdb
 
 
 class DM1080Manager:
 
     task_queue = []
+    start_page = 10
+    end_page = 20
+    item_queue = Queue.Queue()
+
+    #DATABASE
+    DB_TABLE_NAME = "dm1080p_item"
+    DB_HOST = "localhost"
+    DB_NAME = "krven"
+    DB_USR = "root"
+    DB_PWD = "125506"
 
     #HTTP HEADER
     http_headers = {
@@ -26,22 +39,46 @@ class DM1080Manager:
         self.bool_log = bool_log
 
     def start(self):
-
         cookie = CookieModule().getCookie(
             url = self.login_url,
             headers = self.http_headers,
             data = self.usr_data
         )
 
-        for i in range(1, 2, 1):
+        LogModule().log("Get cookie", "start")
+
+        for i in range(self.start_page, self.end_page, 1):
             self.task_queue.append(DM1080Container(
                 start_page = i,
                 end_page = i + 1,
                 headers = self.http_headers,
-                cookie = cookie
+                cookie = cookie,
+                queue = self.item_queue
             ))
-
         for each in self.task_queue:
-                each.start()
+            each.start()
         for each in self.task_queue:
-                each.join()
+            each.join()
+        #整合参数
+        params = []
+        while True:
+            if self.item_queue.empty():
+                break
+            param = self.item_queue.get()
+            params.append(param)
+        LogModule().log(params)
+        #插入到数据库中
+        db_connect = MySQLdb.connect(
+            host=self.DB_HOST,
+            user=self.DB_USR,
+            passwd=self.DB_PWD,
+            db=self.DB_NAME,
+            use_unicode=True,
+            charset="utf8"
+        )
+        sql = "INSERT INTO krven.dm1080p_item (name, link, update_date) VALUES(%s, %s, %s)"
+        cursor = db_connect.cursor()
+        cursor.executemany(sql, params)
+        db_connect.commit()
+        cursor.close()
+        db_connect.close()
